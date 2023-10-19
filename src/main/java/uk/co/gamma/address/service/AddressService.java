@@ -70,11 +70,8 @@ public class AddressService {
      */
     public List<Address> getByPostcode(String postcode, boolean includeBlacklisted) {
 
-        if (includeBlacklisted){
-            return addressMapper.entityToModel(addressRepository.findByPostcode(postcode));
-        }
         try {
-            if (postCodeService.isAddressBlackListed(postcode)) {
+            if (!includeBlacklisted && postCodeService.isAddressBlackListed(postcode)) {
                 return Collections.emptyList();
             }
         } catch (InterruptedException ie) {
