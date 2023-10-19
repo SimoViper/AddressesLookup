@@ -34,9 +34,9 @@ class AddressControllerTests {
     @Test
     void list_when_noAddresses_then_returnEmptyList() {
 
-        given(addressService.getAll()).willReturn(List.of());
+        given(addressService.getAll(false)).willReturn(List.of());
 
-        List<Address> response = addressController.list(null);
+        List<Address> response = addressController.list(null, false);
 
         then(response).isEmpty();
     }
@@ -51,9 +51,9 @@ class AddressControllerTests {
                 new Address(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
         );
 
-        given(addressService.getAll()).willReturn(expected);
+        given(addressService.getAll(false)).willReturn(expected);
 
-        List<Address> actual = addressController.list(null);
+        List<Address> actual = addressController.list(null, false);
 
         then(actual).containsExactlyElementsOf(expected);
     }
@@ -66,9 +66,9 @@ class AddressControllerTests {
                 new Address(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY")
         );
 
-        given(addressService.getByPostcode("RG14 5BY")).willReturn(expected);
+        given(addressService.getByPostcode("RG14 5BY", true)).willReturn(expected);
 
-        List<Address> actual = addressController.list("RG14 5BY");
+        List<Address> actual = addressController.list("RG14 5BY", true);
 
         then(actual).containsExactlyElementsOf(expected);
     }

@@ -21,13 +21,23 @@ Feature: Create and Query Addresses via REST API
       | King's House  | Kings Road West | Newbury    | RG14 5BY |
       | Queen's House | Kings Road West | Newbury    | RG14 5BY |
       | The Malthouse | Elevator Road   | Manchester | M17 1BR  |
-      | Holland House | Bury Street     | London     | EC3A 5AW |
-    When user asks for all addresses with postcode "RG14 5BY"
+      | 6             | Stansfield Close| Reading     | RG2 7BQ |
+    When user asks for all addresses with postcode "RG2 7BQ"
     Then user receives status code of 200
     And collection of addresses returned
       | building      | street          | town    | postcode |
-      | King's House  | Kings Road West | Newbury | RG14 5BY |
-      | Queen's House | Kings Road West | Newbury | RG14 5BY |
+      | 6             | Stansfield Close | Reading | RG2 7BQ |
+
+  Scenario: GET the list of all addresses by postcode
+    Given the collection of addresses
+      | building      | street          | town       | postcode |
+      | King's House  | Kings Road West | Newbury    | RG14 5BY |
+      | Queen's House | Kings Road West | Newbury    | RG14 5BY |
+      | The Malthouse | Elevator Road   | Manchester | RG2 7BQ  |
+      | Holland House | Bury Street     | London     | EC3A 5AW |
+    When user asks for all addresses with postcode "RG14 7DH"
+    Then user receives status code of 200
+    And collection of addresses returned is empty
 
   Scenario: GET an address by ID
     Given the collection of addresses

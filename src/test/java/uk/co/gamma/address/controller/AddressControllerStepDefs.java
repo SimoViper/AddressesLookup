@@ -100,6 +100,14 @@ public class AddressControllerStepDefs {
         then((Address[]) actual).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id").containsAll(expected);
     }
 
+    @Then("collection of addresses returned is empty")
+    public void assertAddressesEmpty() {
+        Object actual = latestResponse.getBody();
+
+        then(actual).isInstanceOf(Address[].class);
+        then((Address[]) actual).isEmpty();
+    }
+
     @Then("address returned")
     public void assertAddress(Address expected) {
         Object actual = latestResponse.getBody();

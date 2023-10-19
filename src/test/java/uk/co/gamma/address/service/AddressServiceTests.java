@@ -3,6 +3,8 @@ package uk.co.gamma.address.service;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -24,6 +26,8 @@ class AddressServiceTests {
     private final AddressMapper addressMapper = Mappers.getMapper(AddressMapper.class);
     @Mock
     private AddressRepository addressRepository;
+    @Mock
+    private PostCodeService postCodeService;
     @InjectMocks
     private AddressService addressService;
 
@@ -33,7 +37,7 @@ class AddressServiceTests {
 
         given(addressRepository.findAll()).willReturn(List.of());
 
-        List<Address> actual = addressService.getAll();
+        List<Address> actual = addressService.getAll(false);
 
         then(actual).isEmpty();
     }
@@ -50,7 +54,57 @@ class AddressServiceTests {
 
         given(addressRepository.findAll()).willReturn(expected);
 
-        List<Address> actual = addressService.getAll();
+        List<Address> actual = addressService.getAll(true);
+
+        // verify
+        then(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @DisplayName("getByPostcode() - Given blacklisted postcode and include_blacklisted flag true, then all Addresses for postcode are returned")
+    @Test
+    void getByPostcode_when_include_blacklisted_true_all_addresses_for_postcode_returned() {
+
+        List<AddressEntity> expected = List.of(
+                new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY")
+        );
+
+        given(addressRepository.findByPostcode("RG14 5BY")).willReturn(expected);
+
+        List<Address> actual = addressService.getByPostcode("RG14 5BY",true);
+
+        // verify
+        then(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @DisplayName("getByPostcode() - Given blacklisted postcode and include_blacklisted flag false, then empty list returned")
+    @Test
+    void getByPostcode_when_include_blacklisted_false_empty_list_returned() throws IOException, InterruptedException {
+
+        List<AddressEntity> addresses = List.of(
+                new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY")
+        );
+        List<AddressEntity> expected = Collections.emptyList();
+
+        given(postCodeService.isAddressBlackListed("RG14 5BY")).willReturn(true);
+
+        List<Address> actual = addressService.getByPostcode("RG14 5BY",false);
+
+        // verify
+        then(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @DisplayName("getByPostcode() - Given non-blacklisted postcode and include_blacklisted flag false, then all Addresses for postcode are returned")
+    @Test
+    void getByPostcode_when_include_blacklisted_false_non_blacklisted_postcode_empty_list_returned() throws IOException, InterruptedException {
+
+        List<AddressEntity> expected = List.of(
+                new AddressEntity(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR")
+        );
+
+        given(postCodeService.isAddressBlackListed("M17 1BR")).willReturn(false);
+        given(addressRepository.findByPostcode("M17 1BR")).willReturn(expected);
+
+        List<Address> actual = addressService.getByPostcode("M17 1BR",false);
 
         // verify
         then(actual).usingRecursiveComparison().isEqualTo(expected);

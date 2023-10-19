@@ -1,5 +1,7 @@
 package uk.co.gamma.address.service;
 
+import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -7,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import uk.co.gamma.address.exception.AddressNotFoundException;
+import uk.co.gamma.address.exception.BlackListReadingException;
 import uk.co.gamma.address.model.Address;
 import uk.co.gamma.address.model.db.entity.AddressEntity;
 import uk.co.gamma.address.model.db.repository.AddressRepository;
@@ -19,39 +22,67 @@ import uk.co.gamma.address.model.mapper.AddressMapper;
 public class AddressService {
 
     private static final Logger logger = LoggerFactory.getLogger(AddressService.class);
+    public static final String ERROR_OCCURRED_BLACKLISTED = "Error Occurred getting Blacklisted addresses.";
+    public static final String ERROR_OCCURRED_BLACKLISTED_RETRY = "Error Occurred getting Blacklisted addresses, please retry later.";
 
     private final AddressRepository addressRepository;
     private final AddressMapper addressMapper;
+    private final PostCodeService postCodeService;
 
     /**
      * Constructor.
-
-     * @param addressRepository  {@link AddressRepository}.
-     * @param addressMapper  {@link AddressMapper}
+     *
+     * @param addressRepository {@link AddressRepository}.
+     * @param addressMapper     {@link AddressMapper}
+     * @param postCodeService
      */
     @Autowired
-    AddressService(AddressRepository addressRepository, AddressMapper addressMapper) {
+    AddressService(AddressRepository addressRepository, AddressMapper addressMapper, PostCodeService postCodeService) {
         this.addressRepository = addressRepository;
         this.addressMapper = addressMapper;
+        this.postCodeService = postCodeService;
     }
 
     /**
      * getAll get all the addresses of the system.
-
+     *
      * @return List  {@link Address} . Empty if none found.
      */
-    public List<Address> getAll() {
-        return addressMapper.entityToModel(addressRepository.findAll());
+    public List<Address> getAll(boolean includeBlacklisted) {
+        List<Address> addresses = addressMapper.entityToModel(addressRepository.findAll());
+        if (!includeBlacklisted && !addresses.isEmpty()) {
+            try {
+                return postCodeService.filterBlacklistedAddresses(addresses);
+            } catch (InterruptedException ie) {
+                throw new BlackListReadingException(ERROR_OCCURRED_BLACKLISTED);
+            } catch (IOException ioe) {
+                throw new BlackListReadingException(ERROR_OCCURRED_BLACKLISTED_RETRY);
+            }
+        }
+        return addresses;
     }
 
     /**
      * getByPostcode find Addresses by their postcode.
 
      * @param postcode the postcode to search by.
-
      * @return List of  {@link Address}. Empty list if not found.
      */
-    public List<Address> getByPostcode(String postcode) {
+    public List<Address> getByPostcode(String postcode, boolean includeBlacklisted) {
+
+        if (includeBlacklisted){
+            return addressMapper.entityToModel(addressRepository.findByPostcode(postcode));
+        }
+        try {
+            if (postCodeService.isAddressBlackListed(postcode)) {
+                return Collections.emptyList();
+            }
+        } catch (InterruptedException ie) {
+            throw new BlackListReadingException(ERROR_OCCURRED_BLACKLISTED);
+        } catch (IOException ioe) {
+            throw new BlackListReadingException(ERROR_OCCURRED_BLACKLISTED_RETRY);
+        }
+
         return addressMapper.entityToModel(addressRepository.findByPostcode(postcode));
     }
 
