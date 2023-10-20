@@ -10,6 +10,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Postcode Blacklist service is a Service class that performs checks on postcodes
+ * and filters Address classes for postcode.
+ */
 @Service
 public class PostCodeBlacklistService {
 
@@ -37,7 +41,7 @@ public class PostCodeBlacklistService {
     }
 
     /**
-     * isAddressBlackListed filters blacklisted addresses.
+     * isAddressBlackListed checks if postcode blacklisted.
      *
      * @param postcode postcode to check.
      * @return {@link boolean} true if the postcode is blacklisted.
