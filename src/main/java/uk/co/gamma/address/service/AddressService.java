@@ -7,7 +7,9 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
+import org.springframework.stereotype.Service;
 import uk.co.gamma.address.exception.AddressNotFoundException;
 import uk.co.gamma.address.exception.BlackListReadingException;
 import uk.co.gamma.address.model.Address;
@@ -18,7 +20,7 @@ import uk.co.gamma.address.model.mapper.AddressMapper;
 /**
  * Address service is a Component class that returns  {@link Address}.
  */
-@Component
+@Service
 public class AddressService {
 
     private static final Logger logger = LoggerFactory.getLogger(AddressService.class);
@@ -49,6 +51,7 @@ public class AddressService {
      * @param includeBlacklisted if false blacklisted addresses are not returned.
      * @return List  {@link Address} . Empty if none found.
      */
+    @Retryable(retryFor = IOException.class, maxAttempts = 2, backoff = @Backoff(delay = 100))
     public List<Address> getAll(boolean includeBlacklisted) {
         List<Address> addresses = addressMapper.entityToModel(addressRepository.findAll());
         if (!includeBlacklisted && !addresses.isEmpty()) {
@@ -70,6 +73,7 @@ public class AddressService {
      * @param includeBlacklisted if false and postcode blacklisted an empty list is returned.
      * @return List of  {@link Address}. Empty list if not found.
      */
+    @Retryable(retryFor = IOException.class, maxAttempts = 2, backoff = @Backoff(delay = 100))
     public List<Address> getByPostcode(String postcode, boolean includeBlacklisted) {
 
         try {

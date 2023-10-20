@@ -118,6 +118,7 @@ class AddressServiceTests {
                 .hasMessageContaining("Error Occurred getting Blacklisted addresses.");
     }
 
+    // if  all retrys fail the IOException will be thrown and the message shown, so worth testing I think.
     @DisplayName("getAll() - Given addresses and include_blacklisted flag false, then if IOException is thrown BlackListReadingException with related error message thrown")
     @Test
     void getAll_when_multipleAddresses_and_include_blacklisted_false_then_retry_BlackListReadingExceptionThrown() throws IOException, InterruptedException {
@@ -204,6 +205,7 @@ class AddressServiceTests {
                 .hasMessageContaining("Error Occurred getting Blacklisted addresses.");
     }
 
+    // if  all retrys fail the IOException will be thrown and the message shown, so worth testing I think.
     @DisplayName("getByPostcode() - Given postcode and include_blacklisted flag false, then if IOException is thrown BlackListReadingException with related error message thrown")
     @Test
     void getByPostcode_when_include_blacklisted_false_retry_blacklistReadingExceptionThrown() throws IOException, InterruptedException {
