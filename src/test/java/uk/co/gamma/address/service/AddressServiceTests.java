@@ -1,5 +1,6 @@
 package uk.co.gamma.address.service;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.BDDAssertions.then;
 import static org.mockito.BDDMockito.given;
 
@@ -14,6 +15,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import uk.co.gamma.address.exception.BlackListReadingException;
 import uk.co.gamma.address.model.Address;
 import uk.co.gamma.address.model.db.entity.AddressEntity;
 import uk.co.gamma.address.model.db.repository.AddressRepository;
@@ -42,9 +44,9 @@ class AddressServiceTests {
         then(actual).isEmpty();
     }
 
-    @DisplayName("getAll() - Given addresses, then the full list is returned")
+    @DisplayName("getAll() - Given addresses and include_blacklisted flag true, then the full list is returned")
     @Test
-    void getAll_when_multipleAddresses_then_allAddressesReturned() {
+    void getAll_when_multipleAddresses_and_include_blacklisted_true_then_allAddressesReturned() {
 
         List<AddressEntity> expected = List.of(
                 new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY"),
@@ -58,6 +60,88 @@ class AddressServiceTests {
 
         // verify
         then(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @DisplayName("getAll() - Given addresses and include_blacklisted flag false, then only non-blacklisted addresses list is returned")
+    @Test
+    void getAll_when_multipleAddresses_and_include_blacklisted_false_then_only_non_blacklisted_AddressesReturned() throws IOException, InterruptedException {
+
+        List<AddressEntity> addressesEntities = List.of(
+                new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY"),
+                new AddressEntity(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR"),
+                new AddressEntity(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
+        );
+
+        List<Address> addresses = List.of(
+                new Address(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY"),
+                new Address(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR"),
+                new Address(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
+        );
+
+        List<Address> expected = List.of(
+                new Address(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR"),
+                new Address(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
+        );
+
+        given(addressRepository.findAll()).willReturn(addressesEntities);
+        given(postCodeBlacklistService.filterBlacklistedAddresses(addresses)).willReturn(expected);
+
+        List<Address> actual = addressService.getAll(false);
+
+        // verify
+        then(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @DisplayName("getAll() - Given addresses and include_blacklisted flag false, then if InterruptedException is thrown BlackListReadingException with related error message thrown")
+    @Test
+    void getAll_when_multipleAddresses_and_include_blacklisted_false_then_BlackListReadingExceptionThrown() throws IOException, InterruptedException {
+
+        List<AddressEntity> addressesEntities = List.of(
+                new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY"),
+                new AddressEntity(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR"),
+                new AddressEntity(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
+        );
+
+        List<Address> addresses = List.of(
+                new Address(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY"),
+                new Address(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR"),
+                new Address(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
+        );
+
+        given(addressRepository.findAll()).willReturn(addressesEntities);
+        given(postCodeBlacklistService.filterBlacklistedAddresses(addresses)).willThrow(new InterruptedException());
+
+        // verify
+        assertThatThrownBy(() ->
+                addressService.getAll(false))
+                .isInstanceOf(BlackListReadingException.class)
+                .hasMessageContaining("Error Occurred getting Blacklisted addresses.");
+    }
+
+    @DisplayName("getAll() - Given addresses and include_blacklisted flag false, then if IOException is thrown BlackListReadingException with related error message thrown")
+    @Test
+    void getAll_when_multipleAddresses_and_include_blacklisted_false_then_retry_BlackListReadingExceptionThrown() throws IOException, InterruptedException {
+
+        List<AddressEntity> addressesEntities = List.of(
+                new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY"),
+                new AddressEntity(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR"),
+                new AddressEntity(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
+        );
+
+        List<Address> addresses = List.of(
+                new Address(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY"),
+                new Address(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR"),
+                new Address(3, "Holland House", "Bury Street", "London", "EC3A 5AW")
+        );
+
+        given(addressRepository.findAll()).willReturn(addressesEntities);
+        given(postCodeBlacklistService.filterBlacklistedAddresses(addresses)).willThrow(new IOException());
+
+        // verify
+        assertThatThrownBy(() ->
+                addressService.getAll(false))
+                .isInstanceOf(BlackListReadingException.class)
+                .hasMessageContaining("Error Occurred getting Blacklisted addresses, please retry later.");
     }
 
     @DisplayName("getByPostcode() - Given blacklisted postcode and include_blacklisted flag true, then all Addresses for postcode are returned")
@@ -80,9 +164,6 @@ class AddressServiceTests {
     @Test
     void getByPostcode_when_include_blacklisted_false_empty_list_returned() throws IOException, InterruptedException {
 
-        List<AddressEntity> addresses = List.of(
-                new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY")
-        );
         List<AddressEntity> expected = Collections.emptyList();
 
         given(postCodeBlacklistService.isAddressBlackListed("RG14 5BY")).willReturn(true);
@@ -108,5 +189,31 @@ class AddressServiceTests {
 
         // verify
         then(actual).usingRecursiveComparison().isEqualTo(expected);
+    }
+
+    @DisplayName("getByPostcode() - Given postcode and include_blacklisted flag false, then if InterruptedException is thrown BlackListReadingException with related error message thrown")
+    @Test
+    void getByPostcode_when_include_blacklisted_false_blacklistReadingExceptionThrown() throws IOException, InterruptedException {
+
+        given(postCodeBlacklistService.isAddressBlackListed("M17 1BR")).willThrow(new InterruptedException());
+
+        // verify
+        assertThatThrownBy(() ->
+                 addressService.getByPostcode("M17 1BR", false))
+                .isInstanceOf(BlackListReadingException.class)
+                .hasMessageContaining("Error Occurred getting Blacklisted addresses.");
+    }
+
+    @DisplayName("getByPostcode() - Given postcode and include_blacklisted flag false, then if IOException is thrown BlackListReadingException with related error message thrown")
+    @Test
+    void getByPostcode_when_include_blacklisted_false_retry_blacklistReadingExceptionThrown() throws IOException, InterruptedException {
+
+        given(postCodeBlacklistService.isAddressBlackListed("M17 1BR")).willThrow(new IOException());
+
+        // verify
+        assertThatThrownBy(() ->
+                addressService.getByPostcode("M17 1BR", false))
+                .isInstanceOf(BlackListReadingException.class)
+                .hasMessageContaining("Error Occurred getting Blacklisted addresses, please retry later.");
     }
 }
