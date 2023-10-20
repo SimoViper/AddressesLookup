@@ -27,32 +27,33 @@ public class AddressService {
 
     private final AddressRepository addressRepository;
     private final AddressMapper addressMapper;
-    private final PostCodeService postCodeService;
+    private final PostCodeBlacklistService postCodeBlacklistService;
 
     /**
      * Constructor.
      *
      * @param addressRepository {@link AddressRepository}.
      * @param addressMapper     {@link AddressMapper}
-     * @param postCodeService
+     * @param postCodeBlacklistService
      */
     @Autowired
-    AddressService(AddressRepository addressRepository, AddressMapper addressMapper, PostCodeService postCodeService) {
+    AddressService(AddressRepository addressRepository, AddressMapper addressMapper, PostCodeBlacklistService postCodeBlacklistService) {
         this.addressRepository = addressRepository;
         this.addressMapper = addressMapper;
-        this.postCodeService = postCodeService;
+        this.postCodeBlacklistService = postCodeBlacklistService;
     }
 
     /**
      * getAll get all the addresses of the system.
      *
+     * @param includeBlacklisted if false blacklisted addresses are not returned.
      * @return List  {@link Address} . Empty if none found.
      */
     public List<Address> getAll(boolean includeBlacklisted) {
         List<Address> addresses = addressMapper.entityToModel(addressRepository.findAll());
         if (!includeBlacklisted && !addresses.isEmpty()) {
             try {
-                return postCodeService.filterBlacklistedAddresses(addresses);
+                return postCodeBlacklistService.filterBlacklistedAddresses(addresses);
             } catch (InterruptedException ie) {
                 throw new BlackListReadingException(ERROR_OCCURRED_BLACKLISTED);
             } catch (IOException ioe) {
@@ -66,12 +67,13 @@ public class AddressService {
      * getByPostcode find Addresses by their postcode.
 
      * @param postcode the postcode to search by.
+     * @param includeBlacklisted if false and postcode blacklisted an empty list is returned.
      * @return List of  {@link Address}. Empty list if not found.
      */
     public List<Address> getByPostcode(String postcode, boolean includeBlacklisted) {
 
         try {
-            if (!includeBlacklisted && postCodeService.isAddressBlackListed(postcode)) {
+            if (!includeBlacklisted && postCodeBlacklistService.isAddressBlackListed(postcode)) {
                 return Collections.emptyList();
             }
         } catch (InterruptedException ie) {

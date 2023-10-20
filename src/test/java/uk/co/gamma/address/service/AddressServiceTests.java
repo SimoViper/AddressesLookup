@@ -27,7 +27,7 @@ class AddressServiceTests {
     @Mock
     private AddressRepository addressRepository;
     @Mock
-    private PostCodeService postCodeService;
+    private PostCodeBlacklistService postCodeBlacklistService;
     @InjectMocks
     private AddressService addressService;
 
@@ -85,7 +85,7 @@ class AddressServiceTests {
         );
         List<AddressEntity> expected = Collections.emptyList();
 
-        given(postCodeService.isAddressBlackListed("RG14 5BY")).willReturn(true);
+        given(postCodeBlacklistService.isAddressBlackListed("RG14 5BY")).willReturn(true);
 
         List<Address> actual = addressService.getByPostcode("RG14 5BY",false);
 
@@ -101,7 +101,7 @@ class AddressServiceTests {
                 new AddressEntity(2, "The Malthouse", "Elevator Road", "Manchester", "M17 1BR")
         );
 
-        given(postCodeService.isAddressBlackListed("M17 1BR")).willReturn(false);
+        given(postCodeBlacklistService.isAddressBlackListed("M17 1BR")).willReturn(false);
         given(addressRepository.findByPostcode("M17 1BR")).willReturn(expected);
 
         List<Address> actual = addressService.getByPostcode("M17 1BR",false);

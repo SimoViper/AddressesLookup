@@ -9,15 +9,20 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class PostCodeService {
+public class PostCodeBlacklistService {
 
     private final BlackListService blackListService;
 
-
-    public PostCodeService(BlackListService blackListService) {
+    public PostCodeBlacklistService(BlackListService blackListService) {
         this.blackListService = blackListService;
     }
 
+    /**
+     * filterBlacklistedAddresses filters blacklisted addresses.
+     *
+     * @param addresses list of addresses to filter.
+     * @return List  {@link Address} filtered addresses.
+     */
     public List<Address> filterBlacklistedAddresses(List<Address> addresses) throws IOException, InterruptedException {
 
         List<Zone> blackListedZones = blackListService.getAll();
@@ -28,6 +33,12 @@ public class PostCodeService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * isAddressBlackListed filters blacklisted addresses.
+     *
+     * @param postcode postcode to check.
+     * @return {@link boolean} true if the postcode is blacklisted.
+     */
     public boolean isAddressBlackListed(String postcode) throws IOException, InterruptedException {
 
         List<Zone> blackListedZones = blackListService.getAll();

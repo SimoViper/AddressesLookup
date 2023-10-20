@@ -17,13 +17,13 @@ import static org.mockito.BDDMockito.given;
 
 
 @ExtendWith(MockitoExtension.class)
-public class PostCodeServiceTest {
+public class PostCodeBlacklistServiceTest {
 
     @Mock
     private BlackListService blackListService;
 
     @InjectMocks
-    private PostCodeService postCodeService;
+    private PostCodeBlacklistService postCodeBlacklistService;
 
     @DisplayName("filterBlacklistedAddresses() - Given addresses, then blacklisted postcodes filtered")
     @Test
@@ -43,7 +43,7 @@ public class PostCodeServiceTest {
         //given
         given(blackListService.getAll()).willReturn(zones);
 
-        List<Address> actual = postCodeService.filterBlacklistedAddresses(addresses);
+        List<Address> actual = postCodeBlacklistService.filterBlacklistedAddresses(addresses);
 
         // verify
         then(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -68,7 +68,7 @@ public class PostCodeServiceTest {
         //given
         given(blackListService.getAll()).willReturn(zones);
 
-        List<Address> actual = postCodeService.filterBlacklistedAddresses(addresses);
+        List<Address> actual = postCodeBlacklistService.filterBlacklistedAddresses(addresses);
 
         // verify
         then(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -84,7 +84,7 @@ public class PostCodeServiceTest {
         //given
         given(blackListService.getAll()).willReturn(zones);
 
-        boolean actual = postCodeService.isAddressBlackListed("RG14 7DH");
+        boolean actual = postCodeBlacklistService.isAddressBlackListed("RG14 7DH");
 
         // verify
         then(actual).isEqualTo(true);
@@ -100,7 +100,7 @@ public class PostCodeServiceTest {
         //given
         given(blackListService.getAll()).willReturn(zones);
 
-        boolean actual = postCodeService.isAddressBlackListed("RG14 5BY");
+        boolean actual = postCodeBlacklistService.isAddressBlackListed("RG14 5BY");
 
         // verify
         then(actual).isEqualTo(false);
