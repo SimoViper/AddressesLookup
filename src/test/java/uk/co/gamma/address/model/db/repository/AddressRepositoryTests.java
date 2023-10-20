@@ -73,7 +73,7 @@ class AddressRepositoryTests {
 
         entityManager.persist(new AddressEntity("King's House", "Kings Road West", "Newbury", "RG14 5BY"));
 
-        List<AddressEntity> actual = addressRepository.findByPostcode("RG14 5BZ");
+        List<AddressEntity> actual = addressRepository.findByPostcodeIgnoreCase("RG14 5BZ");
 
         then(actual).isEmpty();
     }
@@ -86,7 +86,7 @@ class AddressRepositoryTests {
 
         entityManager.persist(expected);
 
-        List<AddressEntity> actual = addressRepository.findByPostcode("RG14 5BY");
+        List<AddressEntity> actual = addressRepository.findByPostcodeIgnoreCase("RG14 5BY");
 
         then(actual).containsExactly(expected);
     }
@@ -108,7 +108,7 @@ class AddressRepositoryTests {
         expected.forEach(address -> entityManager.persist(address));
         notExpected.forEach(address -> entityManager.persist(address));
 
-        List<AddressEntity> actual = addressRepository.findByPostcode("RG14 5BY");
+        List<AddressEntity> actual = addressRepository.findByPostcodeIgnoreCase("RG14 5BY");
 
         then(actual).containsExactlyElementsOf(expected);
     }

@@ -1,5 +1,7 @@
 package uk.co.gamma.address.service;
 
+import org.springframework.retry.annotation.Backoff;
+import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 import uk.co.gamma.address.model.Address;
 import uk.co.gamma.address.model.Zone;
@@ -23,6 +25,7 @@ public class PostCodeBlacklistService {
      * @param addresses list of addresses to filter.
      * @return List  {@link Address} filtered addresses.
      */
+    @Retryable(retryFor = IOException.class, maxAttempts = 2, backoff = @Backoff(delay = 100))
     public List<Address> filterBlacklistedAddresses(List<Address> addresses) throws IOException, InterruptedException {
 
         List<Zone> blackListedZones = blackListService.getAll();
@@ -39,6 +42,7 @@ public class PostCodeBlacklistService {
      * @param postcode postcode to check.
      * @return {@link boolean} true if the postcode is blacklisted.
      */
+    @Retryable(retryFor = IOException.class, maxAttempts = 2, backoff = @Backoff(delay = 100))
     public boolean isAddressBlackListed(String postcode) throws IOException, InterruptedException {
 
         List<Zone> blackListedZones = blackListService.getAll();

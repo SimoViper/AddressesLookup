@@ -153,7 +153,7 @@ class AddressServiceTests {
                 new AddressEntity(1, "King's House", "Kings Road West", "Newbury", "RG14 5BY")
         );
 
-        given(addressRepository.findByPostcode("RG14 5BY")).willReturn(expected);
+        given(addressRepository.findByPostcodeIgnoreCase("RG14 5BY")).willReturn(expected);
 
         List<Address> actual = addressService.getByPostcode("RG14 5BY",true);
 
@@ -184,7 +184,7 @@ class AddressServiceTests {
         );
 
         given(postCodeBlacklistService.isAddressBlackListed("M17 1BR")).willReturn(false);
-        given(addressRepository.findByPostcode("M17 1BR")).willReturn(expected);
+        given(addressRepository.findByPostcodeIgnoreCase("M17 1BR")).willReturn(expected);
 
         List<Address> actual = addressService.getByPostcode("M17 1BR",false);
 
